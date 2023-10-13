@@ -13,8 +13,8 @@ public class InGameStaminaWheelRenderer extends StaminaWheelRenderer {
 
     @Override
     protected void makeWheel(PlayerMovement playerMovement) {
-        double stamina = playerMovement.getStamina();
-        double maxStamina = playerMovement.getMaxStamina();
+        double stamina = playerMovement.getDoubleStamina();
+        double maxStamina = playerMovement.getDoubleMaxStamina();
         if (stamina >= maxStamina) {
             long time = System.currentTimeMillis();
             long timeDiff;

@@ -68,7 +68,7 @@ public final class ParagliderClientEventHandler{
 					List<String> arr = new ArrayList<>();
 
 					arr.add("State: "+h.getState());
-					arr.add((h.isDepleted() ? ChatFormatting.RED : "")+"Stamina: "+h.getStamina()+" / "+h.getMaxStamina());
+					arr.add((h.isDepleted() ? ChatFormatting.RED : "")+"Stamina: "+h.getDoubleStamina()+" / "+h.getDoubleMaxStamina());
 					arr.add(h.getStaminaVessels()+" Stamina Vessels, "+h.getHeartContainers()+" Heart Containers");
 					arr.add(h.getRecoveryDelay()+" Recovery Delay");
 					arr.add("Paragliding: "+h.isParagliding());

@@ -32,7 +32,7 @@ public class AntiVesselItem extends Item {
                 int staminaVessels = m.getStaminaVessels();
                 if (staminaVessels > 0) {
                     m.setStaminaVessels(0);
-                    m.setStamina(Math.min(m.getStamina(), m.getMaxStamina()));
+                    m.setStamina(Math.min(m.getDoubleStamina(), m.getDoubleMaxStamina()));
                     ParagliderUtils.giveItem(player, new ItemStack(Contents.STAMINA_VESSEL.get(), staminaVessels));
                 }
                 int heartContainers = m.getHeartContainers();

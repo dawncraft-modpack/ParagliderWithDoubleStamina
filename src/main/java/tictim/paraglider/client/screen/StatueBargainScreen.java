@@ -72,7 +72,7 @@ public class StatueBargainScreen extends AbstractContainerScreen<StatueBargainCo
         currentTickTimestamp = createdTime = System.currentTimeMillis();
         //noinspection ConstantConditions
         PlayerMovement m = PlayerMovement.of(minecraft.player);
-        staminaWheelRenderer = new BargainScreenStaminaWheelRenderer(m == null ? 0 : m.getMaxStamina());
+        staminaWheelRenderer = new BargainScreenStaminaWheelRenderer(m == null ? 0 : m.getDoubleMaxStamina());
         super.init();
 
         int y = getTop() + 1;

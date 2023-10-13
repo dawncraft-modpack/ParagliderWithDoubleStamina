@@ -157,7 +157,7 @@ public final class ParagliderUtils {
         if (ModCfg.maxStaminaVessels() - m.getStaminaVessels() < quantity) return false;
         if (!simulate && !player.level.isClientSide) {
             m.setStaminaVessels(m.getStaminaVessels() + quantity);
-            m.setStamina(m.getMaxStamina());
+            m.setStamina(m.getDoubleMaxStamina());
             if (effect) spawnParticle(player, ParticleTypes.HAPPY_VILLAGER, 7 + 7 * quantity);
         }
         return true;

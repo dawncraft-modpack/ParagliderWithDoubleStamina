@@ -443,7 +443,7 @@ public final class ModCfg {
                 return null;
             }
             Optional<?> o = property.getValue(e.getValue());
-            if (!o.isPresent()) {
+            if (o.isEmpty()) {
                 warnIgnoredWindSource(input, "property '{}' doesn't contain value '{}'", key, e.getValue());
                 return null;
             }

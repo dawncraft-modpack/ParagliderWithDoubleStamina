@@ -11,7 +11,7 @@ public record SyncMovementMsg(PlayerState state, double stamina, boolean deplete
     }
 
     public SyncMovementMsg(PlayerMovement h) {
-        this(h.getState(), h.getStamina(), h.isDepleted(), h.getRecoveryDelay());
+        this(h.getState(), h.getDoubleStamina(), h.isDepleted(), h.getRecoveryDelay());
     }
 
     public void copyTo(PlayerMovement h) {

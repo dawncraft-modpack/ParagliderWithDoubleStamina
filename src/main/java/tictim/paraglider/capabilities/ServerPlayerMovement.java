@@ -118,7 +118,7 @@ public final class ServerPlayerMovement extends PlayerMovement implements INBTSe
                     STAMINA_CONTAINER_UUID,
                     "Stamina Vessels",
                     ModCfg.maxStamina(getStaminaVessels()));
-            setStamina(Math.min(getStamina(), getMaxStamina()));
+            setStamina(Math.min(getDoubleStamina(), getDoubleMaxStamina()));
             staminaNeedsUpdate = false;
         }
 
@@ -155,7 +155,7 @@ public final class ServerPlayerMovement extends PlayerMovement implements INBTSe
             paraglidingNeedsSync = false;
         }
         if (vesselNeedsSync) {
-            SyncVesselMsg msg = new SyncVesselMsg(getStamina(), getHeartContainers(), getStaminaVessels());
+            SyncVesselMsg msg = new SyncVesselMsg(getDoubleStamina(), getHeartContainers(), getStaminaVessels());
             if (ModCfg.traceVesselPacket()) ParagliderMod.LOGGER.debug("Sending packet {} to player {}", msg, player);
             ModNet.NET.send(PacketDistributor.PLAYER.with(() -> serverPlayer), msg);
 
@@ -263,11 +263,11 @@ public final class ServerPlayerMovement extends PlayerMovement implements INBTSe
         if (isDepleted() != wasDepleted) movementNeedsSync = true;
 
         if (isDepleted()) {
-            if (getStamina() >= getMaxStamina()) {
+            if (getDoubleStamina() >= getDoubleMaxStamina()) {
                 setDepleted(false);
                 movementNeedsSync = true;
             }
-        } else if (getStamina() <= 0) {
+        } else if (getDoubleStamina() <= 0) {
             setDepleted(true);
             panicParaglidingDelay = PANIC_INITIAL_DELAY;
             movementNeedsSync = true;
@@ -299,7 +299,7 @@ public final class ServerPlayerMovement extends PlayerMovement implements INBTSe
     @Override
     public CompoundTag serializeNBT() {
         CompoundTag nbt = new CompoundTag();
-        nbt.putDouble("stamina", getStamina());
+        nbt.putDouble("stamina", getDoubleStamina());
         nbt.putBoolean("depleted", isDepleted());
         nbt.putInt("recoveryDelay", getRecoveryDelay());
         nbt.putInt("panicParaglidingDelay", panicParaglidingDelay);

@@ -41,7 +41,7 @@ public abstract class PlayerMovement implements Stamina, ICapabilityProvider {
     }
 
     @Override
-    public double getStamina() {
+    public double getDoubleStamina() {
         return stamina;
     }
 
@@ -63,7 +63,7 @@ public abstract class PlayerMovement implements Stamina, ICapabilityProvider {
     @Override
     public double giveStamina(double amount, boolean simulate) {
         if (amount <= 0) return 0;
-        double maxStamina = getMaxStamina();
+        double maxStamina = getDoubleMaxStamina();
         double staminaToGive = Math.min(amount, maxStamina - stamina);
         if (staminaToGive <= 0) return 0;
         if (!simulate) stamina += staminaToGive;
@@ -104,7 +104,7 @@ public abstract class PlayerMovement implements Stamina, ICapabilityProvider {
     }
 
     @Override
-    public double getMaxStamina() {
+    public double getDoubleMaxStamina() {
         AttributeInstance attribute = player.getAttribute(Contents.MAX_STAMINA.get());
         if (attribute != null) return (int) attribute.getValue();
         ParagliderMod.LOGGER.error("Player {} doesn't have max stamina attribute", player);
@@ -126,7 +126,7 @@ public abstract class PlayerMovement implements Stamina, ICapabilityProvider {
                     && (state.isParagliding() ? ModCfg.paraglidingConsumesStamina() : ModCfg.runningConsumesStamina()))
                 stamina = Math.max(0, stamina + state.change());
         } else if (recoveryDelay > 0) recoveryDelay--;
-        else if (state.change() > 0) stamina = Math.min(getMaxStamina(), stamina + state.change());
+        else if (state.change() > 0) stamina = Math.min(getDoubleMaxStamina(), stamina + state.change());
     }
 
     protected void applyMovement() {
@@ -152,7 +152,7 @@ public abstract class PlayerMovement implements Stamina, ICapabilityProvider {
         another.setRecoveryDelay(getRecoveryDelay());
         another.setStaminaVessels(getStaminaVessels());
         another.setHeartContainers(getHeartContainers());
-        another.setStamina(getMaxStamina());
+        another.setStamina(getDoubleMaxStamina());
     }
 
     private final LazyOptional<PlayerMovement> self = LazyOptional.of(() -> this);

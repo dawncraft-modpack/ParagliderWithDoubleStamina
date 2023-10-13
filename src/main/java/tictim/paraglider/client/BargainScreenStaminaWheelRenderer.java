@@ -18,7 +18,7 @@ public class BargainScreenStaminaWheelRenderer extends StaminaWheelRenderer {
 
     @Override
     protected void makeWheel(PlayerMovement h) {
-        double maxStamina = h.getMaxStamina();
+        double maxStamina = h.getDoubleMaxStamina();
 
         long newTimestamp = System.currentTimeMillis();
         long timePassed = newTimestamp - lastUpdateTimestamp;
