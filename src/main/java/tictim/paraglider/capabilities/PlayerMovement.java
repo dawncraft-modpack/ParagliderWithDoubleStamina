@@ -16,137 +16,156 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Objects;
 
-public abstract class PlayerMovement implements Stamina, ICapabilityProvider{
-	public static final int RECOVERY_DELAY = 10;
+public abstract class PlayerMovement implements Stamina, ICapabilityProvider {
+    public static final int RECOVERY_DELAY = 10;
 
-	public final Player player;
-	private PlayerState state = PlayerState.IDLE;
+    public final Player player;
+    private PlayerState state = PlayerState.IDLE;
 
-	private int stamina = ModCfg.startingStamina();
-	private boolean depleted;
-	private int recoveryDelay;
-	private int staminaVessels;
-	private int heartContainers;
+    private double stamina = ModCfg.startingStamina();
+    private boolean depleted;
+    private int recoveryDelay;
+    private int staminaVessels;
+    private int heartContainers;
 
-	public PlayerMovement(Player player){
-		this.player = Objects.requireNonNull(player);
-	}
+    public PlayerMovement(Player player) {
+        this.player = Objects.requireNonNull(player);
+    }
 
-	public PlayerState getState(){
-		return this.state;
-	}
-	public void setState(PlayerState state){
-		this.state = Objects.requireNonNull(state);
-	}
+    public PlayerState getState() {
+        return this.state;
+    }
 
-	@Override public int getStamina(){
-		return stamina;
-	}
-	public void setStamina(int stamina){
-		this.stamina = stamina;
-	}
-	@Override public boolean isDepleted(){
-		return depleted;
-	}
-	@Override public void setDepleted(boolean depleted){
-		this.depleted = depleted;
-	}
+    public void setState(PlayerState state) {
+        this.state = Objects.requireNonNull(state);
+    }
 
-	@Override public int giveStamina(int amount, boolean simulate){
-		if(amount<=0) return 0;
-		int maxStamina = getMaxStamina();
-		int staminaToGive = Math.min(amount, maxStamina-stamina);
-		if(staminaToGive<=0) return 0;
-		if(!simulate) stamina += staminaToGive;
-		return staminaToGive;
-	}
+    @Override
+    public double getStamina() {
+        return stamina;
+    }
 
-	@Override public int takeStamina(int amount, boolean simulate, boolean ignoreDepletion){
-		if(amount<=0||(isDepleted()&&!ignoreDepletion)) return 0;
-		int staminaToTake = Math.min(amount, stamina);
-		if(staminaToTake<=0) return 0;
-		if(!simulate) stamina -= staminaToTake;
-		return staminaToTake;
-	}
+    @Override
+    public void setStamina(double stamina) {
+        this.stamina = stamina;
+    }
 
-	public int getRecoveryDelay(){
-		return recoveryDelay;
-	}
-	public void setRecoveryDelay(int recoveryDelay){
-		this.recoveryDelay = recoveryDelay;
-	}
+    @Override
+    public boolean isDepleted() {
+        return depleted;
+    }
 
-	public int getStaminaVessels(){
-		return staminaVessels;
-	}
-	public void setStaminaVessels(int staminaVessels){
-		this.staminaVessels = Math.max(0, staminaVessels);
-	}
-	public int getHeartContainers(){
-		return heartContainers;
-	}
-	public void setHeartContainers(int heartContainers){
-		this.heartContainers = Math.max(0, heartContainers);
-	}
+    @Override
+    public void setDepleted(boolean depleted) {
+        this.depleted = depleted;
+    }
 
-	@Override public int getMaxStamina(){
-		AttributeInstance attribute = player.getAttribute(Contents.MAX_STAMINA.get());
-		if(attribute!=null) return (int)attribute.getValue();
-		ParagliderMod.LOGGER.error("Player {} doesn't have max stamina attribute", player);
-		return ModCfg.maxStamina(staminaVessels);
-	}
+    @Override
+    public double giveStamina(double amount, boolean simulate) {
+        if (amount <= 0) return 0;
+        double maxStamina = getMaxStamina();
+        double staminaToGive = Math.min(amount, maxStamina - stamina);
+        if (staminaToGive <= 0) return 0;
+        if (!simulate) stamina += staminaToGive;
+        return staminaToGive;
+    }
 
-	public boolean canUseParaglider(){
-		return player.isCreative()||!depleted;
-	}
+    @Override
+    public double takeStamina(double amount, boolean simulate, boolean ignoreDepletion) {
+        if (amount <= 0 || (isDepleted() && !ignoreDepletion)) return 0;
+        double staminaToTake = Math.min(amount, stamina);
+        if (staminaToTake <= 0) return 0;
+        if (!simulate) stamina -= staminaToTake;
+        return staminaToTake;
+    }
 
-	public abstract boolean isParagliding();
+    public int getRecoveryDelay() {
+        return recoveryDelay;
+    }
 
-	public abstract void update();
+    public void setRecoveryDelay(int recoveryDelay) {
+        this.recoveryDelay = recoveryDelay;
+    }
 
-	protected void updateStamina(){
-		if(state.isConsume()){
-			recoveryDelay = RECOVERY_DELAY;
-			if(!depleted&&(state.isParagliding() ? ModCfg.paraglidingConsumesStamina() : ModCfg.runningConsumesStamina()))
-				stamina = Math.max(0, stamina+state.change());
-		}else if(recoveryDelay>0) recoveryDelay--;
-		else if(state.change()>0) stamina = Math.min(getMaxStamina(), stamina+state.change());
-	}
+    public int getStaminaVessels() {
+        return staminaVessels;
+    }
 
-	protected void applyMovement(){
-		if(!player.isCreative()&&isDepleted()){
-			player.addEffect(new MobEffectInstance(Contents.EXHAUSTED.get(), 2, 0, false, false, false));
-		}
-		if(isParagliding()){
-			player.fallDistance = 0;
+    public void setStaminaVessels(int staminaVessels) {
+        this.staminaVessels = Math.max(0, staminaVessels);
+    }
 
-			Vec3 m = player.getDeltaMovement();
-			switch(state){
-				case PARAGLIDING:
-					if(m.y<-0.05) player.setDeltaMovement(new Vec3(m.x, -0.05, m.z));
-					break;
-				case ASCENDING:
-					if(m.y<0.25) player.setDeltaMovement(new Vec3(m.x, Math.max(m.y+0.05, 0.25), m.z));
-					break;
-			}
-		}
-	}
+    public int getHeartContainers() {
+        return heartContainers;
+    }
 
-	public void copyTo(PlayerMovement another){
-		another.setRecoveryDelay(getRecoveryDelay());
-		another.setStaminaVessels(getStaminaVessels());
-		another.setHeartContainers(getHeartContainers());
-		another.setStamina(getMaxStamina());
-	}
+    public void setHeartContainers(int heartContainers) {
+        this.heartContainers = Math.max(0, heartContainers);
+    }
 
-	private final LazyOptional<PlayerMovement> self = LazyOptional.of(() -> this);
+    @Override
+    public double getMaxStamina() {
+        AttributeInstance attribute = player.getAttribute(Contents.MAX_STAMINA.get());
+        if (attribute != null) return (int) attribute.getValue();
+        ParagliderMod.LOGGER.error("Player {} doesn't have max stamina attribute", player);
+        return ModCfg.maxStamina(staminaVessels);
+    }
 
-	@Nonnull @Override public <T> LazyOptional<T> getCapability(Capability<T> cap, @Nullable Direction side){
-		return cap==Caps.playerMovement||cap==Caps.stamina ? self.cast() : LazyOptional.empty();
-	}
+    public boolean canUseParaglider() {
+        return player.isCreative() || !depleted;
+    }
 
-	@SuppressWarnings("ConstantConditions")
-	@Nullable public static PlayerMovement of(ICapabilityProvider capabilityProvider){
-		return capabilityProvider.getCapability(Caps.playerMovement).orElse(null);
-	}
+    public abstract boolean isParagliding();
+
+    public abstract void update();
+
+    protected void updateStamina() {
+        if (state.isConsume()) {
+            recoveryDelay = RECOVERY_DELAY;
+            if (!depleted
+                    && (state.isParagliding() ? ModCfg.paraglidingConsumesStamina() : ModCfg.runningConsumesStamina()))
+                stamina = Math.max(0, stamina + state.change());
+        } else if (recoveryDelay > 0) recoveryDelay--;
+        else if (state.change() > 0) stamina = Math.min(getMaxStamina(), stamina + state.change());
+    }
+
+    protected void applyMovement() {
+        if (!player.isCreative() && isDepleted()) {
+            player.addEffect(new MobEffectInstance(Contents.EXHAUSTED.get(), 2, 0, false, false, false));
+        }
+        if (isParagliding()) {
+            player.fallDistance = 0;
+
+            Vec3 m = player.getDeltaMovement();
+            switch (state) {
+                case PARAGLIDING:
+                    if (m.y < -0.05) player.setDeltaMovement(new Vec3(m.x, -0.05, m.z));
+                    break;
+                case ASCENDING:
+                    if (m.y < 0.25) player.setDeltaMovement(new Vec3(m.x, Math.max(m.y + 0.05, 0.25), m.z));
+                    break;
+            }
+        }
+    }
+
+    public void copyTo(PlayerMovement another) {
+        another.setRecoveryDelay(getRecoveryDelay());
+        another.setStaminaVessels(getStaminaVessels());
+        another.setHeartContainers(getHeartContainers());
+        another.setStamina(getMaxStamina());
+    }
+
+    private final LazyOptional<PlayerMovement> self = LazyOptional.of(() -> this);
+
+    @Nonnull
+    @Override
+    public <T> LazyOptional<T> getCapability(Capability<T> cap, @Nullable Direction side) {
+        return cap == Caps.playerMovement || cap == Caps.stamina ? self.cast() : LazyOptional.empty();
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    @Nullable
+    public static PlayerMovement of(ICapabilityProvider capabilityProvider) {
+        return capabilityProvider.getCapability(Caps.playerMovement).orElse(null);
+    }
 }

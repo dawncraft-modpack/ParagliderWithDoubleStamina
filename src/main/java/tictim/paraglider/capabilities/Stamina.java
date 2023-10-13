@@ -4,17 +4,17 @@ public interface Stamina{
 	/**
 	 * @return Amount of stamina
 	 */
-	int getStamina();
+	double getStamina();
 
 	/**
 	 * @param stamina Amount of stamina to be set
 	 */
-	void setStamina(int stamina);
+	void setStamina(double stamina);
 
 	/**
 	 * @return Maximum amount of stamina, >=0
 	 */
-	int getMaxStamina();
+	double getMaxStamina();
 
 	/**
 	 * @return Whether or not depleted state is active
@@ -33,7 +33,7 @@ public interface Stamina{
 	 * @param simulate Simulation only if {@code true}
 	 * @return Amount of stamina given
 	 */
-	int giveStamina(int amount, boolean simulate);
+	double giveStamina(double amount, boolean simulate);
 
 	/**
 	 * Subtract stamina by specific {@code amount}. If stamina is currently in depleted state, unless {@code ignoreDepletion} is {@code true}, no stamina will be subtracted.
@@ -43,5 +43,5 @@ public interface Stamina{
 	 * @param ignoreDepletion Bypasses depleted state check if {@code true}
 	 * @return Amount of stamina taken
 	 */
-	int takeStamina(int amount, boolean simulate, boolean ignoreDepletion);
+	double takeStamina(double amount, boolean simulate, boolean ignoreDepletion);
 }
