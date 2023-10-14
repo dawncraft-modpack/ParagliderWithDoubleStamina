@@ -7,7 +7,7 @@ import tictim.paraglider.capabilities.PlayerState;
 public record SyncMovementMsg(PlayerState state, double stamina, boolean depleted, int recoveryDelay) {
     public static SyncMovementMsg read(FriendlyByteBuf buffer) {
         return new SyncMovementMsg(
-                PlayerState.of(buffer.readUnsignedByte()), buffer.readInt(), buffer.readBoolean(), buffer.readVarInt());
+                PlayerState.of(buffer.readUnsignedByte()), buffer.readDouble(), buffer.readBoolean(), buffer.readVarInt());
     }
 
     public SyncMovementMsg(PlayerMovement h) {
