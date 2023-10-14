@@ -311,7 +311,7 @@ public final class ServerPlayerMovement extends PlayerMovement implements INBTSe
 
     @Override
     public void deserializeNBT(CompoundTag nbt) {
-        setStamina(nbt.getInt("stamina"));
+        setStamina(nbt.getDouble("stamina"));
         setDepleted(nbt.getBoolean("depleted"));
         setRecoveryDelay(nbt.getInt("recoveryDelay"));
         panicParaglidingDelay = nbt.getInt("panicParaglidingDelay");

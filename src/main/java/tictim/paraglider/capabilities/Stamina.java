@@ -44,9 +44,11 @@ public interface Stamina {
      * @return Amount of stamina taken
      */
     double takeStamina(double amount, boolean simulate, boolean ignoreDepletion);
+
     /**
      * @return Amount of stamina
      */
+    @Deprecated
     default int getStamina() {
         return (int) getDoubleStamina();
     }
@@ -54,6 +56,7 @@ public interface Stamina {
     /**
      * @param stamina Amount of stamina to be set
      */
+    @Deprecated
     default void setStamina(int stamina) {
         setStamina((double) stamina);
     }
@@ -61,6 +64,7 @@ public interface Stamina {
     /**
      * @return Maximum amount of stamina, >=0
      */
+    @Deprecated
     default int getMaxStamina() {
         return (int) getDoubleMaxStamina();
     }
@@ -72,6 +76,7 @@ public interface Stamina {
      * @param simulate Simulation only if {@code true}
      * @return Amount of stamina given
      */
+    @Deprecated
     default int giveStamina(int amount, boolean simulate) {
         return (int) giveStamina((double) amount, simulate);
     }
@@ -84,6 +89,7 @@ public interface Stamina {
      * @param ignoreDepletion Bypasses depleted state check if {@code true}
      * @return Amount of stamina taken
      */
+    @Deprecated
     default int takeStamina(int amount, boolean simulate, boolean ignoreDepletion) {
         return (int) takeStamina((double) amount, simulate, ignoreDepletion);
     }

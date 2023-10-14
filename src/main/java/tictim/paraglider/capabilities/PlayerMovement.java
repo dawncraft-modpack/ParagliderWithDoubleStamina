@@ -124,9 +124,9 @@ public abstract class PlayerMovement implements Stamina, ICapabilityProvider {
             recoveryDelay = RECOVERY_DELAY;
             if (!depleted
                     && (state.isParagliding() ? ModCfg.paraglidingConsumesStamina() : ModCfg.runningConsumesStamina()))
-                stamina = Math.max(0, stamina + state.change());
+                stamina = Math.max(0, stamina + state.doubleChange());
         } else if (recoveryDelay > 0) recoveryDelay--;
-        else if (state.change() > 0) stamina = Math.min(getDoubleMaxStamina(), stamina + state.change());
+        else if (state.doubleChange() > 0) stamina = Math.min(getDoubleMaxStamina(), stamina + state.doubleChange());
     }
 
     protected void applyMovement() {

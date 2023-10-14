@@ -42,7 +42,7 @@ public class InGameStaminaWheelRenderer extends StaminaWheelRenderer {
                             && (state.isParagliding()
                                     ? ModCfg.paraglidingConsumesStamina()
                                     : ModCfg.runningConsumesStamina())) {
-                        addWheel(t, t.getProportion(stamina + state.change() * 10), t.getProportion(stamina), color);
+                        addWheel(t, t.getProportion(stamina + state.doubleChange() * 10), t.getProportion(stamina), color);
                     }
                 }
             }
