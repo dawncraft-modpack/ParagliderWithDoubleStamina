@@ -130,7 +130,7 @@ public final class Contents{
 	public static final RegistryObject<MenuType<StatueBargainContainer>> HORNED_STATUE_CONTAINER = CONTAINERS.register(
 			"horned_statue", () -> new MenuType<>(ModContainers::hornedStatue));
 
-	public static final RegistryObject<Attribute> MAX_STAMINA = ATTRIBUTES.register("max_stamina", () -> new RangedAttribute("max_stamina", 0, 0, Double.MAX_VALUE).setSyncable(true));
+	public static final RegistryObject<Attribute> MAX_STAMINA = ATTRIBUTES.register("max_stamina", () -> new RangedAttribute("attribute.name.paragliders.max_stamina", 0, 0, Double.MAX_VALUE).setSyncable(true));
 
 	public static final RegistryObject<StructureFeature<?>> UNDERGROUND_HORNED_STATUE = STRUCTURE_FEATURES.register("underground_horned_statue", UndergroundHornedStatue::new);
 	public static final RegistryObject<StructureFeature<?>> NETHER_HORNED_STATUE = STRUCTURE_FEATURES.register("nether_horned_statue", NetherHornedStatue::new);

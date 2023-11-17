@@ -147,6 +147,7 @@ publishing {
     publications {
         create("maven", MavenPublication) {
             artifact jar
+            artifact sourcesJar
         }
     }
 }
