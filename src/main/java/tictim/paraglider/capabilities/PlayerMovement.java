@@ -8,6 +8,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.fml.common.Mod;
 import tictim.paraglider.ModCfg;
 import tictim.paraglider.ParagliderMod;
 import tictim.paraglider.contents.Contents;
@@ -72,7 +73,7 @@ public abstract class PlayerMovement implements Stamina, ICapabilityProvider {
 
     @Override
     public double takeStamina(double amount, boolean simulate, boolean ignoreDepletion) {
-        if (amount <= 0 || (isDepleted() && !ignoreDepletion)) return 0;
+        if (amount <= 0 || (!canAction() && !ignoreDepletion)) return 0;
         double staminaToTake = Math.min(amount, stamina);
         if (staminaToTake <= 0) return 0;
         if (!simulate) stamina -= staminaToTake;
@@ -111,8 +112,13 @@ public abstract class PlayerMovement implements Stamina, ICapabilityProvider {
         return ModCfg.maxStamina(staminaVessels);
     }
 
+    public boolean canAction() {
+        return ((!isDepleted() || !ModCfg.enableNoActionDepletedRegenerating()) &&
+                !player.hasEffect(Contents.EXHAUSTED.get()));
+    }
+
     public boolean canUseParaglider() {
-        return player.isCreative() || !depleted;
+        return player.isCreative() || canAction();
     }
 
     public abstract boolean isParagliding();
@@ -122,15 +128,17 @@ public abstract class PlayerMovement implements Stamina, ICapabilityProvider {
     protected void updateStamina() {
         if (state.isConsume()) {
             recoveryDelay = RECOVERY_DELAY;
-            if (!depleted
-                    && (state.isParagliding() ? ModCfg.paraglidingConsumesStamina() : ModCfg.runningConsumesStamina()))
+            if (canAction() &&
+                (state.isParagliding() ? ModCfg.paraglidingConsumesStamina() : ModCfg.runningConsumesStamina())) {
                 stamina = Math.max(0, stamina + state.doubleChange());
-        } else if (recoveryDelay > 0) recoveryDelay--;
+            }
+        }
+        else if (recoveryDelay > 0) {recoveryDelay--;}
         else if (state.doubleChange() > 0) stamina = Math.min(getDoubleMaxStamina(), stamina + state.doubleChange());
     }
 
     protected void applyMovement() {
-        if (!player.isCreative() && isDepleted()) {
+        if (!player.isCreative() && isDepleted() && ModCfg.enableNoActionDepletedRegenerating()) {
             player.addEffect(new MobEffectInstance(Contents.EXHAUSTED.get(), 2, 0, false, false, false));
         }
         if (isParagliding()) {

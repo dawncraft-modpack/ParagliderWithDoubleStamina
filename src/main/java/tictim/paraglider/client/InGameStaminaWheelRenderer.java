@@ -22,27 +22,37 @@ public class InGameStaminaWheelRenderer extends StaminaWheelRenderer {
                 prevStamina = stamina;
                 fullTime = time;
                 timeDiff = 0;
-            } else timeDiff = time - fullTime;
+            }
+            else {timeDiff = time - fullTime;}
             Color color = StaminaWheelConstants.getGlowAndFadeColor(timeDiff);
             if (color.alpha <= 0) return;
             for (WheelLevel t : WheelLevel.values()) addWheel(t, 0, t.getProportion(stamina), color);
-        } else {
+        }
+        else {
             prevStamina = stamina;
             Color color = DEPLETED_1.blend(
                     DEPLETED_2,
-                    cycle(System.currentTimeMillis(), playerMovement.isDepleted() ? DEPLETED_BLINK : BLINK));
+                    cycle(System.currentTimeMillis(),
+                          playerMovement.isDepleted() ? DEPLETED_BLINK : BLINK));
             PlayerState state = playerMovement.getState();
             for (WheelLevel t : WheelLevel.values()) {
                 addWheel(t, 0, t.getProportion(maxStamina), EMPTY);
-                if (playerMovement.isDepleted()) {
+                if (!playerMovement.canAction()) {
                     addWheel(t, 0, t.getProportion(stamina), color);
-                } else {
-                    addWheel(t, 0, t.getProportion(stamina), IDLE);
+                }
+                else {
+                    addWheel(t,
+                             0,
+                             t.getProportion(stamina),
+                             IDLE.blend(DEPLETED_2, (float) (1 - (stamina / maxStamina))));
                     if (state.isConsume()
-                            && (state.isParagliding()
-                                    ? ModCfg.paraglidingConsumesStamina()
-                                    : ModCfg.runningConsumesStamina())) {
-                        addWheel(t, t.getProportion(stamina + state.doubleChange() * 10), t.getProportion(stamina), color);
+                        && (state.isParagliding()
+                            ? ModCfg.paraglidingConsumesStamina()
+                            : ModCfg.runningConsumesStamina())) {
+                        addWheel(t,
+                                 t.getProportion(stamina + state.doubleChange() * 10),
+                                 t.getProportion(stamina),
+                                 color);
                     }
                 }
             }

@@ -12,11 +12,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.predicate.BlockStatePredicate;
 import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.common.ForgeConfigSpec.BooleanValue;
-import net.minecraftforge.common.ForgeConfigSpec.ConfigValue;
-import net.minecraftforge.common.ForgeConfigSpec.DoubleValue;
-import net.minecraftforge.common.ForgeConfigSpec.EnumValue;
-import net.minecraftforge.common.ForgeConfigSpec.IntValue;
+import net.minecraftforge.common.ForgeConfigSpec.*;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
@@ -24,8 +20,8 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.config.ModConfigEvent;
 import net.minecraftforge.fml.loading.FMLPaths;
-import net.minecraftforge.server.ServerLifecycleHooks;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.server.ServerLifecycleHooks;
 import tictim.paraglider.capabilities.PlayerState;
 import tictim.paraglider.loot.ParagliderModifier;
 
@@ -36,13 +32,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -78,6 +69,7 @@ public final class ModCfg {
     private static BooleanValue enableHeartContainers;
     private static BooleanValue enableStaminaVessels;
     private static BooleanValue enableStructures;
+    private static BooleanValue enableNoActionDepletedRegenerating;
 
     private static BooleanValue debugPlayerMovement;
     private static BooleanValue traceMovementPacket;
@@ -175,6 +167,10 @@ public final class ModCfg {
         return enableStructures.get();
     }
 
+    public static boolean enableNoActionDepletedRegenerating() {
+        return enableNoActionDepletedRegenerating.get();
+    }
+
     public static boolean debugPlayerMovement() {
         return debugPlayerMovement.get();
     }
@@ -221,67 +217,71 @@ public final class ModCfg {
         ForgeConfigSpec.Builder server = new ForgeConfigSpec.Builder();
         ascendingWinds = server.comment("Fire will float you upward.").define("ascendingWinds", true);
         windSources = server.comment(
-                        """
-						You can customize which block produces wind.
-						Write each blockstate to one of this format:
-						  [block ID]   (Matches all state of the block)
-						  [block ID]#[property1=value],[property2=value],[property3=value]   (Matches state of the block that has specified properties)
-						Same property cannot be specified multiple times. Wind sources with any invalid part will be excluded.""")
-                .defineListAllowEmpty(
-                        Collections.singletonList("windSources"),
-                        () -> ImmutableList.of("fire", "soul_fire", "campfire#lit=true", "soul_campfire#lit=true"),
-                        o -> true);
+                                    """
+                                    You can customize which block produces wind.
+                                    Write each blockstate to one of this format:
+                                      [block ID]   (Matches all state of the block)
+                                      [block ID]#[property1=value],[property2=value],[property3=value]   (Matches state of the block that has specified properties)
+                                    Same property cannot be specified multiple times. Wind sources with any invalid part will be excluded.""")
+                            .defineListAllowEmpty(
+                                    Collections.singletonList("windSources"),
+                                    () -> ImmutableList.of("fire",
+                                                           "soul_fire",
+                                                           "campfire#lit=true",
+                                                           "soul_campfire#lit=true"),
+                                    o -> true);
 
         paraglidingSpeed = server.comment("Horizontal movement speed while paragliding.")
-                .defineInRange("paraglidingSpeed", 1.0, 0.2, 10);
+                                 .defineInRange("paraglidingSpeed", 1.0, 0.2, 10);
         paragliderDurability = server.comment("Durability of Paragliders. Set to zero to disable durability.")
-                .defineInRange("paragliderDurability", 0, 0, Integer.MAX_VALUE);
+                                     .defineInRange("paragliderDurability", 0, 0, Integer.MAX_VALUE);
 
         server.push("spiritOrbs");
         enderDragonDropsVessel = server.comment(
-                        "If true, Ender Dragon will drop heart container(stamina vessel if heart container is disabled) upon death.")
-                .define("enderDragonDropsVessel", true);
+                                               "If true, Ender Dragon will drop heart container(stamina vessel if heart container is disabled) upon death.")
+                                       .define("enderDragonDropsVessel", true);
         raidGivesVessel = server.comment(
-                        "If true, Raids will give heart container(stamina vessel if heart container is disabled) upon victory.")
-                .define("raidGivesVessel", true);
+                                        "If true, Raids will give heart container(stamina vessel if heart container is disabled) upon victory.")
+                                .define("raidGivesVessel", true);
         server.pop();
 
         server.push("vessels");
         startingHearts = server.comment("Starting health points.").defineInRange("startingHearts", 10, 1, 512);
         maxHeartContainers = server.comment(
-                        """
-						Maximum amount of Heart Containers one player can consume.
-						Do note that the maximum health point is capped at 1024 (512 hearts).""")
-                .defineInRange("maxHeartContainers", 20, 0, 512);
+                                           """
+                                           Maximum amount of Heart Containers one player can consume.
+                                           Do note that the maximum health point is capped at 1024 (512 hearts).""")
+                                   .defineInRange("maxHeartContainers", 20, 0, 512);
 
         maxStamina = server.comment(
-                        "Maximum amount of stamina Player can get. Do note that one third of this value is equal to one stamina wheel.")
-                .defineInRange("maxStamina", 3000, 0.0, Integer.MAX_VALUE);
+                                   "Maximum amount of stamina Player can get. Do note that one third of this value is equal to one stamina wheel.")
+                           .defineInRange("maxStamina", 3000, 0.0, Integer.MAX_VALUE);
         startingStamina = server.comment(
-                        """
-						Amount of stamina Player starts with. Values higher than maxStamina doesn't work.
-						If you want to make this value displayed as exactly one stamina wheel, you have to make this value one third of maxStamina.""")
-                .defineInRange("startingStamina", 1000, 0.0, Integer.MAX_VALUE);
+                                        """
+                                        Amount of stamina Player starts with. Values higher than maxStamina doesn't work.
+                                        If you want to make this value displayed as exactly one stamina wheel, you have to make this value one third of maxStamina.""")
+                                .defineInRange("startingStamina", 1000, 0.0, Integer.MAX_VALUE);
         maxStaminaVessels = server.comment(
-                        "Stamina Vessels players need to obtain max out stamina. More vessels means lesser stamina increase per vessel.")
-                .defineInRange("maxStaminaVessels", 10, 0, Integer.MAX_VALUE);
+                                          "Stamina Vessels players need to obtain max out stamina. More vessels means lesser stamina increase per vessel.")
+                                  .defineInRange("maxStaminaVessels", 10, 0, Integer.MAX_VALUE);
         server.pop();
 
         paragliderInTowersOfTheWild = server.comment(
-                        """
-						Configurable option for Towers of the Wild compat feature. Can be ignored if Towers of the Wild is not installed.
-						DEFAULT: Default option, spawn Deku Leaf in ocean tower chests and Paraglider in normal tower chests
-						DISABLE: Don't spawn anything
-						PARAGLIDER_ONLY: Spawn paraglider in both ocean and normal tower chests
-						DEKU_LEAF_ONLY: Spawn deku leaf in both ocean and normal tower chests, like a boss
-						(Note: The TotW datapack for 1.18 only has regular towers, thus options for ocean chests have no effect.)""")
-                .defineEnum("paragliderInTowersOfTheWild", ParagliderModifier.ConfigOption.DEFAULT);
+                                                    """
+                                                    Configurable option for Towers of the Wild compat feature. Can be ignored if Towers of the Wild is not installed.
+                                                    DEFAULT: Default option, spawn Deku Leaf in ocean tower chests and Paraglider in normal tower chests
+                                                    DISABLE: Don't spawn anything
+                                                    PARAGLIDER_ONLY: Spawn paraglider in both ocean and normal tower chests
+                                                    DEKU_LEAF_ONLY: Spawn deku leaf in both ocean and normal tower chests, like a boss
+                                                    (Note: The TotW datapack for 1.18 only has regular towers, thus options for ocean chests have no effect.)""")
+                                            .defineEnum("paragliderInTowersOfTheWild",
+                                                        ParagliderModifier.ConfigOption.DEFAULT);
 
         server.push("stamina");
         paraglidingConsumesStamina = server.comment("Paragliding and ascending will consume stamina.")
-                .define("paraglidingConsumesStamina", true);
+                                           .define("paraglidingConsumesStamina", true);
         runningConsumesStamina = server.comment("Actions other than paragliding or ascending will consume stamina.")
-                .define("runningAndSwimmingConsumesStamina", false);
+                                       .define("runningAndSwimmingConsumesStamina", false);
 
         server.push("consumptions");
         for (PlayerState state : PlayerState.values()) {
@@ -295,32 +295,35 @@ public final class ModCfg {
 
         ForgeConfigSpec.Builder common = new ForgeConfigSpec.Builder();
         common.comment(
-                        """
-						Easy to access switches to toggle newer features on and off.
-						Most of them requires server restart or datapack reload. All of them, actually.""")
-                .push("features");
+                      """
+                      Easy to access switches to toggle newer features on and off.
+                      Most of them requires server restart or datapack reload. All of them, actually.""")
+              .push("features");
         enableSpiritOrbGens = common.comment(
-                        """
-						For those who wants to remove entirety of Spirit Orbs generated from chests, more specifically...
-						  * Spirit Orbs generated in various chests
-						  * Spirit Orbs dropped by spawners and such
-						Note that bargain recipe for Heart Containers/Stamina Vessels will persist, even if this option is disabled.""")
-                .define("spiritOrbGens", true);
+                                            """
+                                            For those who wants to remove entirety of Spirit Orbs generated from chests, more specifically...
+                                              * Spirit Orbs generated in various chests
+                                              * Spirit Orbs dropped by spawners and such
+                                            Note that bargain recipe for Heart Containers/Stamina Vessels will persist, even if this option is disabled.""")
+                                    .define("spiritOrbGens", true);
         enableHeartContainers = common.comment(
-                        """
-						For those who wants to remove entirety of Heart Containers from the game, more specifically...
-						  * Heart Containers obtained by "challenges" (i.e. Killing dragon, wither, raid)
-						  * Bargains using Heart Containers (custom recipes won't be affected)
-						Note that if this option is disabled while staminaVessels is enabled, "challenges" will drop stamina vessels instead.""")
-                .define("heartContainers", true);
+                                              """
+                                              For those who wants to remove entirety of Heart Containers from the game, more specifically...
+                                                * Heart Containers obtained by "challenges" (i.e. Killing dragon, wither, raid)
+                                                * Bargains using Heart Containers (custom recipes won't be affected)
+                                              Note that if this option is disabled while staminaVessels is enabled, "challenges" will drop stamina vessels instead.""")
+                                      .define("heartContainers", true);
         enableStaminaVessels = common.comment(
-                        """
-						For those who wants to remove entirety of Stamina Vessels from the game, more specifically...
-						  * Bargains using Stamina Vessels (custom recipes won't be affected)""")
-                .define("staminaVessels", true);
+                                             """
+                                             For those who wants to remove entirety of Stamina Vessels from the game, more specifically...
+                                               * Bargains using Stamina Vessels (custom recipes won't be affected)""")
+                                     .define("staminaVessels", true);
         enableStructures = common.comment(
-                        "For those who wants to remove all structures added by this mod. Requires restart.")
-                .define("structures", true);
+                                         "For those who wants to remove all structures added by this mod. Requires restart.")
+                                 .define("structures", true);
+        enableNoActionDepletedRegenerating = common.comment(
+                                        "For those who wants to action when regenerating after depleted")
+                                                   .define("noActionDepletedRegenerating", true);
         common.pop();
 
         common.push("debug");
@@ -344,7 +347,8 @@ public final class ModCfg {
                     setStaminaWheelX(staminaWheel.getDouble("x"));
                     setStaminaWheelY(staminaWheel.getDouble("y"));
                 }
-            } else {
+            }
+            else {
                 staminaWheelX = DEFAULT_STAMINA_WHEEL_X;
                 staminaWheelY = DEFAULT_STAMINA_WHEEL_Y;
             }
@@ -388,8 +392,9 @@ public final class ModCfg {
         ModConfig cfg = event.getConfig();
         if (cfg.getModId().equals(MODID) && cfg.getType() == ModConfig.Type.SERVER) {
             MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
-            if (server != null)
+            if (server != null) {
                 server.execute(() -> windSourcesParsed = Collections.unmodifiableMap(parseWindSources()));
+            }
         }
     }
 
@@ -428,7 +433,8 @@ public final class ModCfg {
             if (properties.containsKey(key)) {
                 warnIgnoredWindSource(input, "same property '{}' was defined twice", key);
                 return null;
-            } else properties.put(key, s.substring(i + 1));
+            }
+            else {properties.put(key, s.substring(i + 1));}
         }
 
         Map<Property<?>, Object> parsedProperties = new IdentityHashMap<>();
@@ -438,7 +444,8 @@ public final class ModCfg {
             if (property == null) {
                 warnIgnoredWindSource(input, "property '{}' doesn't exist on that block", key);
                 return null;
-            } else if (parsedProperties.containsKey(property)) {
+            }
+            else if (parsedProperties.containsKey(property)) {
                 warnIgnoredWindSource(input, "same property '{}' was defined twice", key);
                 return null;
             }

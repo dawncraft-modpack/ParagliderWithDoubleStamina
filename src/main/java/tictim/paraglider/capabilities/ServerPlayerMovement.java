@@ -122,21 +122,25 @@ public final class ServerPlayerMovement extends PlayerMovement implements INBTSe
             staminaNeedsUpdate = false;
         }
 
-        if (player.isOnGround() || player.getY() > prevY) accumulatedFallDistance = 0;
-        else accumulatedFallDistance += prevY - player.getY();
+        if (player.isOnGround() || player.getY() > prevY) {accumulatedFallDistance = 0;}
+        else {accumulatedFallDistance += prevY - player.getY();}
 
         boolean isHoldingParaglider = Paraglider.isParaglider(player.getMainHandItem());
         setState(calculatePlayerState(isHoldingParaglider));
         if (prevState != getState()) movementNeedsSync = true;
+
+        var wasDepleted = isDepleted();
+
         updateStamina();
+
+        if (!player.isCreative() && isDepleted() && !wasDepleted) {
+            player.addEffect(new MobEffectInstance(Contents.EXHAUSTED.get(), getRecoveryDelay() + 10, 0, false, false, false));
+        }
 
         boolean isParagliding = getState().isParagliding() && (canUseParaglider() || tryPanicParagliding());
         if (prevIsParagliding != isParagliding) {
             paraglidingNeedsSync = true;
             prevIsParagliding = isParagliding;
-        }
-        if (!player.isCreative() && isDepleted()) {
-            player.addEffect(new MobEffectInstance(Contents.EXHAUSTED.get(), 2, 0, false, false, false));
         }
         applyMovement();
 
@@ -149,8 +153,11 @@ public final class ServerPlayerMovement extends PlayerMovement implements INBTSe
         }
         if (paraglidingNeedsSync) {
             SyncParaglidingMsg msg2 = new SyncParaglidingMsg(this);
-            if (ModCfg.traceParaglidingPacket())
-                ParagliderMod.LOGGER.debug("Sending packet {} to player tracking {}", msg2, player);
+            if (ModCfg.traceParaglidingPacket()) {
+                ParagliderMod.LOGGER.debug("Sending packet {} to player tracking {}",
+                                           msg2,
+                                           player);
+            }
             ModNet.NET.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> serverPlayer), msg2);
             paraglidingNeedsSync = false;
         }
@@ -160,7 +167,7 @@ public final class ServerPlayerMovement extends PlayerMovement implements INBTSe
             ModNet.NET.send(PacketDistributor.PLAYER.with(() -> serverPlayer), msg);
 
             if (ModCfg.maxHeartContainers() <= getHeartContainers()
-                    && ModCfg.maxStaminaVessels() <= getStaminaVessels()) {
+                && ModCfg.maxStaminaVessels() <= getStaminaVessels()) {
                 ModAdvancements.give(serverPlayer, ModAdvancements.ALL_VESSELS, "code_triggered");
             }
 
@@ -186,41 +193,43 @@ public final class ServerPlayerMovement extends PlayerMovement implements INBTSe
         if (attrib == null) return 0;
         AttributeModifier prev = attrib.getModifier(uuid);
         if (prev != null) attrib.removeModifier(prev);
-        if (value != 0)
+        if (value != 0) {
             attrib.addPermanentModifier(
                     new AttributeModifier(uuid, () -> name, value, AttributeModifier.Operation.ADDITION));
+        }
         return value - (prev != null ? prev.getAmount() : 0);
     }
 
     private PlayerState calculatePlayerState(boolean isHoldingParaglider) {
-        if (player.getAbilities().flying) return PlayerState.IDLE;
-        else if (player.getVehicle() != null) return PlayerState.RIDING;
-        else if (player.isSwimming()) return PlayerState.SWIMMING;
-        else if (player.isInWater()) return canBreathe() ? PlayerState.BREATHING_UNDERWATER : PlayerState.UNDERWATER;
+        if (player.getAbilities().flying) {return PlayerState.IDLE;}
+        else if (player.getVehicle() != null) {return PlayerState.RIDING;}
+        else if (player.isSwimming()) {return PlayerState.SWIMMING;}
+        else if (player.isInWater()) {return canBreathe() ? PlayerState.BREATHING_UNDERWATER : PlayerState.UNDERWATER;}
         else if (!player.isOnGround() && isHoldingParaglider && !player.isFallFlying()) {
-            if (ModCfg.ascendingWinds() && Wind.isInside(player.level, player.getBoundingBox()))
+            if (ModCfg.ascendingWinds() && Wind.isInside(player.level, player.getBoundingBox())) {
                 return PlayerState.ASCENDING;
+            }
             else if (prevState.isParagliding() || accumulatedFallDistance >= 1.45f) return PlayerState.PARAGLIDING;
         }
 
-        if (player.isSprinting() && !player.isUsingItem()) return PlayerState.RUNNING;
-        else if (player.isOnGround()) return PlayerState.IDLE;
-        else return PlayerState.MIDAIR;
+        if (player.isSprinting() && !player.isUsingItem()) {return PlayerState.RUNNING;}
+        else if (player.isOnGround()) {return PlayerState.IDLE;}
+        else {return PlayerState.MIDAIR;}
     }
 
     private boolean canBreathe() {
         if (player.hasEffect(MobEffects.WATER_BREATHING)) return true;
         if (player.isOnGround()
-                && (!player.isEyeInFluid(FluidTags.WATER)
-                        || player.level
-                                .getBlockState(new BlockPos(player.getX(), player.getEyeY(), player.getZ()))
-                                .is(Blocks.BUBBLE_COLUMN))) {
+            && (!player.isEyeInFluid(FluidTags.WATER)
+                || player.level
+                        .getBlockState(new BlockPos(player.getX(), player.getEyeY(), player.getZ()))
+                        .is(Blocks.BUBBLE_COLUMN))) {
             return true;
         }
 
         ItemStack head = player.getItemBySlot(EquipmentSlot.HEAD);
         if (!head.isEmpty()) {
-            if (head.getItem() == Items.TURTLE_HELMET) return true;
+            if (head.getItem() == Items.TURTLE_HELMET) {return true;}
             else if (EnchantmentHelper.getItemEnchantmentLevel(Enchantments.AQUA_AFFINITY, head) > 0) return true;
         }
         ItemStack feet = player.getItemBySlot(EquipmentSlot.FEET);
@@ -263,11 +272,12 @@ public final class ServerPlayerMovement extends PlayerMovement implements INBTSe
         if (isDepleted() != wasDepleted) movementNeedsSync = true;
 
         if (isDepleted()) {
-            if (getDoubleStamina() >= getDoubleMaxStamina()) {
+            if (getDoubleStamina() >= getDoubleMaxStamina() || canAction()) {
                 setDepleted(false);
                 movementNeedsSync = true;
             }
-        } else if (getDoubleStamina() <= 0) {
+        }
+        else if (getDoubleStamina() <= 0) {
             setDepleted(true);
             panicParaglidingDelay = PANIC_INITIAL_DELAY;
             movementNeedsSync = true;
@@ -278,10 +288,12 @@ public final class ServerPlayerMovement extends PlayerMovement implements INBTSe
         if (panicParaglidingDuration > 0) {
             panicParaglidingDuration--;
             return true;
-        } else if (panicParaglidingDelay > 0) {
+        }
+        else if (panicParaglidingDelay > 0) {
             panicParaglidingDelay--;
             return false;
-        } else {
+        }
+        else {
             panicParaglidingDelay = PANIC_DELAY;
             panicParaglidingDuration = PANIC_DURATION;
             return true;

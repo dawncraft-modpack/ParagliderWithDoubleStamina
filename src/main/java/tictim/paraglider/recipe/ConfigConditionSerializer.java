@@ -43,6 +43,7 @@ public enum ConfigConditionSerializer implements IConditionSerializer<ICondition
                 return id;
             }
 
+            @SuppressWarnings("removal")
             @Override
             public boolean test() {
                 return config.getAsBoolean();
